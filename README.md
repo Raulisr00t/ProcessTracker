@@ -25,8 +25,11 @@ cl /W4 /D_WIN32_DCOM ProcessTracker.c /link wbemuuid.lib ole32.lib oleaut32.lib
 
 ## Usage
 ProcessTracer.exe <ProcessName | ALL>
+
 Use a specific process name to trace it, or use 'ALL' to trace all processes.
+
 Example: ProcessTracer.exe chrome.exe
+
 ProcessTracer.exe ALL
 
 ### Notes
