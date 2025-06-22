@@ -35,10 +35,10 @@ CHAR* ToUpper(char* str) {
 }
 
 void Usage() {
-    printf("[>] USAGE: ProcessTracer.exe <ProcessName | ALL>\n");
+    printf("[>] USAGE: ProcessTracker.exe <ProcessName | ALL>\n");
     printf("    --> Use a specific process name to trace it, or use 'ALL' to trace all processes.\n");
-    printf("    Example: ProcessTracer.exe chrome.exe\n");
-    printf("             ProcessTracer.exe ALL\n");
+    printf("    Example: ProcessTracker.exe chrome.exe\n");
+    printf("             ProcessTracker.exe ALL\n");
 }
 
 HRESULT GetProcessNameByPID(IWbemServices* pSvc, DWORD pid, BSTR* pName) {
