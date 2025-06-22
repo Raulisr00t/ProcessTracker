@@ -24,10 +24,10 @@ cl /W4 /D_WIN32_DCOM ProcessTracker.c /link wbemuuid.lib ole32.lib oleaut32.lib
 ```
 
 ## Usage
-
-1.Run the executable in a console window. The program will start listening for process events and print them in real-time.
-
-2.Press Ctrl+C or close the console window to exit cleanly.
+ProcessTracer.exe <ProcessName | ALL>
+Use a specific process name to trace it, or use 'ALL' to trace all processes.
+Example: ProcessTracer.exe chrome.exe
+ProcessTracer.exe ALL
 
 ### Notes
 
