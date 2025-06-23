@@ -4,9 +4,11 @@
 
 ## Features
 
+- Monitor ALL processes or user defined process
 - Detects process creation events.
+- Detects process suspension events.
 - Detects process termination events.
-- Displays process name, PID, parent PID, and parent process name.
+- Displays process name, PID, parent PID, Executable Paths and parent process name.
 - Graceful exit on Ctrl+C or console close events.
 
 ## Requirements
@@ -34,5 +36,5 @@ ProcessTracer.exe ALL
 
 ### Notes
 
-1.Requires administrative privileges to access some WMI namespaces.
-2.Uses COM and WMI for querying process information.
+-> Requires administrative privileges to access some WMI namespaces.
+-> Uses COM and WMI for querying process information.
