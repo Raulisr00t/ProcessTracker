@@ -38,4 +38,5 @@ ProcessTracer.exe ALL
 ### Notes
 
 -> Requires administrative privileges to access some WMI namespaces.
+
 -> Uses COM and WMI for querying process information.
