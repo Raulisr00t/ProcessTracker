@@ -5,6 +5,7 @@
 ## Features
 
 - Monitor ALL processes or user defined process
+- Take Process creation termination real time.
 - Detects process creation events.
 - Detects process suspension events.
 - Detects process termination events.
