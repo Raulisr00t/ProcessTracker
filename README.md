@@ -1,6 +1,6 @@
 # ProcessTracker
 
-**ProcessTracker** is a Windows application that monitors process creation <-> suspended <-> termination events in real-time using WMI (Windows Management Instrumentation). It displays information about newly created ,suspended and terminated processes, including their names, PIDs, and parent process details.
+**ProcessTracker** is a Windows application that monitors process creation <-> suspended <-> termination events in real-time using WMI (Windows Management Instrumentation). It displays information about newly created ,suspended and terminated processes, including their names, PIDs, and parent process details.The ProcessTracker will be the main component of My Own Antivirus Engine for Windows OS
 
 ## Features
 
