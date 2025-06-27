@@ -378,7 +378,9 @@ int main(int argc, const char* argv[]) {
         Usage();
         return -1;
     }
-
-    StartSession(argv[1]);
+    
+    const char *process = argv[1];
+    StartSession(process);
+    
     return 0;
 }
