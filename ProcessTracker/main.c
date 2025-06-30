@@ -38,7 +38,7 @@ CHAR* TakeTime() {
             local_time->tm_sec);
     }
     
-    free(buffer);
+    //free(buffer);
 
     return buffer;
 }
