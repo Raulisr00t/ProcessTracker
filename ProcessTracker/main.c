@@ -7,8 +7,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <amsi.h>
 
 #pragma comment(lib, "wbemuuid.lib")
+#pragma comment(lib, "amsi.lib")
 
 volatile BOOL g_bExit = FALSE;
 
@@ -54,11 +56,76 @@ CHAR* ToUpper(char* str) {
     return original;
 }
 
-void Usage() {
-    printf("[>] USAGE: ProcessTracker.exe <ProcessName | ALL>\n");
-    printf("    --> Use a specific process name to trace it, or use 'ALL' to trace all processes.\n");
-    printf("    Example: ProcessTracker.exe chrome.exe\n");
-    printf("             ProcessTracker.exe ALL\n");
+int Error(LPCWSTR msg) {
+    wprintf(L"[!] %ls (Error: %lu)\n", msg, GetLastError());
+    return GetLastError();
+}
+
+BOOL AmsiScan(LPCWSTR File) {
+    BOOL success = FALSE;
+    HANDLE hFile = INVALID_HANDLE_VALUE;
+    HANDLE hMap = NULL;
+    PVOID buffer = NULL;
+    HAMSICONTEXT context = NULL;
+    HAMSISESSION session = NULL;
+    AMSI_RESULT sresult;
+    HRESULT hr;
+
+    hFile = CreateFileW(File, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    if (hFile == INVALID_HANDLE_VALUE)
+        return Error(L"Cannot open target file"), FALSE;
+
+    ULONG size = GetFileSize(hFile, NULL);
+
+    hr = AmsiInitialize(L"Engine", &context);
+    if (FAILED(hr))
+        return Error(L"AmsiInitialize failed"), FALSE;
+
+    hr = AmsiOpenSession(context, &session);
+
+    if (FAILED(hr)) {
+        Error(L"AmsiOpenSession failed");
+        AmsiUninitialize(context);
+        CloseHandle(hFile);
+        return FALSE;
+    }
+
+    hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
+    if (hMap == NULL) {
+        Error(L"CreateFileMappingW failed");
+        AmsiCloseSession(context, session);
+        AmsiUninitialize(context);
+        CloseHandle(hFile);
+        return FALSE;
+    }
+
+    buffer = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0);
+    if (!buffer) {
+        Error(L"MapViewOfFile failed");
+        CloseHandle(hMap);
+        AmsiCloseSession(context, session);
+        AmsiUninitialize(context);
+        CloseHandle(hFile);
+        return FALSE;
+    }
+
+    hr = AmsiScanBuffer(context, buffer, size, File, session, &sresult);
+    if (FAILED(hr))
+        Error(L"AmsiScanBuffer failed");
+    else if (AmsiResultIsMalware(sresult))
+        wprintf(L"[+] Suspicious File Detected: %ls\n", File);
+    else
+        wprintf(L"[-] File is clean: %ls\n", File);
+
+    success = TRUE;
+
+    UnmapViewOfFile(buffer);
+    CloseHandle(hMap);
+    AmsiCloseSession(context, session);
+    AmsiUninitialize(context);
+    CloseHandle(hFile);
+
+    return success;
 }
 
 HRESULT GetProcessNameByPID(IWbemServices* pSvc, DWORD pid, BSTR* pName) {
@@ -110,8 +177,7 @@ BOOL IsProcessSuspended(DWORD pid) {
     HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
 
     if (hSnap == INVALID_HANDLE_VALUE) {
-        printf("[!] Failed to SnapShot to Thread\n");
-        printf("[!] ERROR: %lu\n", GetLastError());
+        Error(L"[!] Error Creating Process Snapshot\n");
         return FALSE;
     }
 
@@ -143,6 +209,13 @@ BOOL IsProcessSuspended(DWORD pid) {
     CloseHandle(hSnap);
 
     return (hasThreads && isSuspended);
+}
+
+void Usage() {
+    printf("[>] USAGE: ProcessTracker.exe <ProcessName | ALL>\n");
+    printf("    --> Use a specific process name to trace it, or use 'ALL' to trace all processes.\n");
+    printf("    Example: ProcessTracker.exe chrome.exe\n");
+    printf("             ProcessTracker.exe ALL\n");
 }
 
 void StartSession(const char* filter) {
@@ -279,14 +352,13 @@ void StartSession(const char* filter) {
 
                             BOOL suspended = IsProcessSuspended(vtPID.intVal);
 
-                            if (FAILED(GetProcessNameByPID(pSvc, vtPPID.intVal, &parentName))) {
+                            if (FAILED(GetProcessNameByPID(pSvc, vtPPID.intVal, &parentName))) 
                                 parentName = SysAllocString(L"<Unknown>");
-                            }
-
+                            
                             char* timeStr = TakeTime();
                             wchar_t wTime[32];
                             mbstowcs(wTime, timeStr, 31);
-
+                            
                             wprintf(L"[CREATE] [TIME] => %s  %-25s PID: %-5d PPID: %-7d ParentProcessName: %-20s  EXE: %s  <->  CommandLine: %s  %s\n",
                                 wTime,
                                 vtName.bstrVal,
@@ -298,6 +370,8 @@ void StartSession(const char* filter) {
                                 
                                 suspended ? L"[Suspended]" : L"");
                             
+                            //AmsiScan(vtCommandLine.vt); Scan Every File in Loop
+
                             SysFreeString(parentName);
                         }
                     }
@@ -389,8 +463,9 @@ int main(int argc, const char* argv[]) {
         Usage();
         return -1;
     }
-
-    StartSession(argv[1]);
+    
+    const char *filter = argv[1];
+    StartSession(filter);
 
     return 0;
 }
